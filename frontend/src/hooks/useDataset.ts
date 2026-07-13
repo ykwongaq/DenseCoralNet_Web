@@ -20,7 +20,14 @@ export function useDataset(initialOffset = 0, limit = 100) {
 				);
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const json: DatasetResponse = await res.json();
-				setData(json.data);
+				// Compute display labels once per item
+				const enriched = json.data.map((item) => ({
+					...item,
+					classLabels: item.class_ids.map((_, i) =>
+						i === 0 ? "Background" : `Class ${i}`,
+					),
+				}));
+				setData(enriched);
 				setTotal(json.total);
 				setOffset(newOffset);
 			} catch (err) {

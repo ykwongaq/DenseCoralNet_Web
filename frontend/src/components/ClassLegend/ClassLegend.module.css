@@ -38,14 +38,6 @@
   background: #f8f9fa;
 }
 
-.active {
-  opacity: 1;
-}
-
-.inactive {
-  opacity: 0.3;
-}
-
 .swatch {
   width: 12px;
   height: 12px;
@@ -58,9 +50,4 @@
   color: #495057;
   flex: 1;
   font-size: 12px;
-}
-
-.absent {
-  color: #ced4da;
-  font-size: 11px;
 }

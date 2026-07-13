@@ -3,35 +3,36 @@ import styles from "./ClassLegend.module.css";
 
 interface Props {
 	palette: ClassInfo[];
-	activeClassIds: number[]; // classes present in current image
+	activeClassIds: number[]; // original class IDs present in current image
+	classLabels: string[]; // pre-computed display labels (same length as activeClassIds)
 }
 
-export default function ClassLegend({ palette, activeClassIds }: Props) {
-	const activeSet = new Set(activeClassIds);
+export default function ClassLegend({
+	palette,
+	activeClassIds,
+	classLabels,
+}: Props) {
+	// Build a lookup from original class ID to ClassInfo (for colors)
+	const paletteMap = new Map<number, ClassInfo>();
+	for (const cls of palette) {
+		paletteMap.set(cls.id, cls);
+	}
 
 	return (
 		<div className={styles.legend}>
-			<h3 className={styles.title}>Classes</h3>
+			<h3 className={styles.title}>Classes ({activeClassIds.length})</h3>
 			<div className={styles.list}>
-				{palette.map((cls) => {
-					const isActive = activeSet.has(cls.id);
+				{activeClassIds.map((id, i) => {
+					const cls = paletteMap.get(id);
+					if (!cls) return null;
 					const [r, g, b] = cls.color;
 					return (
-						<div
-							key={cls.id}
-							className={`${styles.item} ${isActive ? styles.active : styles.inactive}`}
-						>
+						<div key={id} className={styles.item}>
 							<span
 								className={styles.swatch}
 								style={{ backgroundColor: `rgb(${r},${g},${b})` }}
 							/>
-							<span className={styles.label}>
-								{cls.name}
-								{cls.id === 0 ? "" : ` (${cls.id})`}
-							</span>
-							{!isActive && cls.id !== 0 && (
-								<span className={styles.absent}>—</span>
-							)}
+							<span className={styles.label}>{classLabels[i]}</span>
 						</div>
 					);
 				})}

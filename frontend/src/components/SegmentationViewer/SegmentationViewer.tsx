@@ -127,6 +127,7 @@ export default function SegmentationViewer() {
 						<ClassLegend
 							palette={palette}
 							activeClassIds={currentItem?.class_ids ?? []}
+							classLabels={currentItem?.classLabels ?? []}
 						/>
 					)}
 				</aside>

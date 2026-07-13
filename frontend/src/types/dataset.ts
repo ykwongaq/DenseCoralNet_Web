@@ -15,6 +15,8 @@ export interface DataItem {
 	width: number;
 	height: number;
 	class_ids: number[];
+	/** Display labels computed from remapped indices (index 0 = "Background", 1+ = "Class N"). */
+	classLabels: string[];
 }
 
 /** Response from GET /api/dataset */

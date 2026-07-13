@@ -32,7 +32,7 @@ export default function ImageInfo({ item, loading }: Props) {
 			<div className={styles.row}>
 				<span className={styles.key}>Classes</span>
 				<span className={styles.value}>
-					{item.class_ids.length > 0 ? item.class_ids.join(", ") : "—"}
+					{item.classLabels.length > 0 ? item.classLabels.join(", ") : "—"}
 				</span>
 			</div>
 		</div>

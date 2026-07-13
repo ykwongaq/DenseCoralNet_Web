@@ -36,12 +36,16 @@ _logger = get_logger(__name__)
 _logger.info("Loaded config from %s", config_path)
 
 _server = server.Server(config)
-app = FastAPI(title="CoralSCOP-LAT API")
+app = FastAPI(title="DenseCoralNet API")
 
 # CORS must be added first (outermost middleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_origins=[
+        "http://localhost:5173",  # Vite dev
+        "http://localhost:3000",  # Alt dev port
+        "https://dense-coralnet.hkustvgd.com",  # Production frontend
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,26 +94,24 @@ async def get_dataset_item(data_id: int):
     return _server.resolve_data_info(data)
 
 
-@app.get("/api/images/{filename}")
-async def serve_image(filename: str):
-    """Serve an image file from the dataset."""
-    file_path = os.path.join(_server.image_dir, filename)
+@app.get("/api/images/{data_id}")
+async def serve_image(data_id: int):
+    """Serve an image file from the dataset by data ID."""
+    data = _server.dataset.get_data(data_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Data item {data_id} not found")
 
-    if not os.path.isfile(file_path):
-        raise HTTPException(status_code=404, detail=f"Image '{filename}' not found")
-
-    return FileResponse(file_path, media_type="image/jpeg")
+    return FileResponse(data.image_path, media_type="image/jpeg")
 
 
-@app.get("/api/masks/{filename}")
-async def serve_mask(filename: str):
-    """Serve a mask PNG file from the dataset."""
-    file_path = os.path.join(_server.mask_dir, filename)
+@app.get("/api/masks/{data_id}")
+async def serve_mask(data_id: int):
+    """Serve a mask PNG file from the dataset by data ID."""
+    data = _server.dataset.get_data(data_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Data item {data_id} not found")
 
-    if not os.path.isfile(file_path):
-        raise HTTPException(status_code=404, detail=f"Mask '{filename}' not found")
-
-    return FileResponse(file_path, media_type="image/png")
+    return FileResponse(data.mask_path, media_type="image/png")
 
 
 @app.get("/api/palette")

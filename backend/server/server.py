@@ -1,6 +1,5 @@
 import os
 from typing import Dict, List, Optional, Tuple
-from urllib.parse import quote
 
 import numpy as np
 from PIL import Image
@@ -112,8 +111,8 @@ class Server:
             "id": data.id,
             "image_filename": data.image_filename,
             "mask_filename": data.mask_filename,
-            "image_url": f"/api/images/{quote(data.image_filename, safe='')}",
-            "mask_url": f"/api/masks/{quote(data.mask_filename, safe='')}",
+            "image_url": f"/api/images/{data.id}",
+            "mask_url": f"/api/masks/{data.id}",
             "width": data.width,
             "height": data.height,
             "class_ids": data.class_ids,

@@ -72,8 +72,8 @@ export default function ImageCanvas({
 
 				for (let i = 0; i < pixels.length; i += 4) {
 					const r = pixels[i];
-					const g = pixels[i + 1];
-					const b = pixels[i + 2];
+					// const g = pixels[i + 1];
+					// const b = pixels[i + 2];
 
 					// Grayscale mask: all channels are the same value (class ID)
 					const classId = r; // same as g and b for grayscale PNGs

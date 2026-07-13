@@ -1,5 +1,4 @@
-import { useEffect, useCallback } from "react";
-import type { ClassInfo } from "../../types/dataset";
+import { useEffect, useCallback, useState } from "react";
 import { useDataset } from "../../hooks/useDataset";
 import { usePalette } from "../../hooks/usePalette";
 import ImageCanvas from "../ImageCanvas/ImageCanvas";
@@ -23,6 +22,9 @@ export default function SegmentationViewer() {
 	} = useDataset(0, 1); // fetch one item at a time
 
 	const { palette, loading: paletteLoading } = usePalette();
+
+	// Alpha slider for mask overlay opacity
+	const [alpha, setAlpha] = useState(0.5);
 
 	// Keyboard navigation
 	const handleKeyDown = useCallback(
@@ -75,14 +77,45 @@ export default function SegmentationViewer() {
 					{loading && !currentItem ? (
 						<div className={styles.loading}>Loading...</div>
 					) : currentItem ? (
-						<ImageCanvas
-							imageUrl={currentItem.image_url}
-							maskUrl={currentItem.mask_url}
-							palette={palette}
-							width={currentItem.width}
-							height={currentItem.height}
-							alpha={0.5}
-						/>
+						<div className={styles.comparison}>
+							<div className={styles.pane}>
+								<ImageCanvas
+									imageUrl={currentItem.image_url}
+									maskUrl={currentItem.mask_url}
+									palette={palette}
+									width={currentItem.width}
+									height={currentItem.height}
+									showMask={false}
+								/>
+								<span className={styles.paneLabel}>Original</span>
+							</div>
+							<div className={styles.arrow}>→</div>
+							<div className={styles.pane}>
+								<ImageCanvas
+									imageUrl={currentItem.image_url}
+									maskUrl={currentItem.mask_url}
+									palette={palette}
+									width={currentItem.width}
+									height={currentItem.height}
+									alpha={alpha}
+								/>
+								<span className={styles.paneLabel}>DenseCoralNet Result</span>
+								<div className={styles.alphaControl}>
+									<label className={styles.alphaLabel}>
+										Opacity: {Math.round(alpha * 100)}%
+									</label>
+									<input
+										type="range"
+										min={0}
+										max={1}
+										step={0.05}
+										value={alpha}
+										onChange={(e) => setAlpha(parseFloat(e.target.value))}
+										className={styles.alphaSlider}
+									/>
+								</div>
+							</div>
+						</div>
 					) : null}
 					<ImageInfo item={currentItem} loading={loading} />
 				</div>

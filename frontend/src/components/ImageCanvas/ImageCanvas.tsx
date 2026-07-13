@@ -9,6 +9,7 @@ interface Props {
 	width: number;
 	height: number;
 	alpha?: number; // overlay opacity, 0-1
+	showMask?: boolean; // if false, only draw the original image
 }
 
 export default function ImageCanvas({
@@ -18,6 +19,7 @@ export default function ImageCanvas({
 	width,
 	height,
 	alpha = 0.5,
+	showMask = true,
 }: Props) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -35,61 +37,69 @@ export default function ImageCanvas({
 		}
 
 		const baseImage = new Image();
-		const maskImage = new Image();
-		let loaded = 0;
+		baseImage.crossOrigin = "anonymous";
+		baseImage.src = imageUrl;
 
-		const onLoad = () => {
-			loaded++;
-			if (loaded < 2) return;
-
+		baseImage.onload = () => {
 			canvas.width = width;
 			canvas.height = height;
 
 			// Draw base image
 			ctx.drawImage(baseImage, 0, 0, width, height);
 
+			// If mask is disabled, stop here
+			if (!showMask) return;
+
 			// Draw mask overlay on a temp canvas to get pixel data
-			const tmpCanvas = document.createElement("canvas");
-			tmpCanvas.width = width;
-			tmpCanvas.height = height;
-			const tmpCtx = tmpCanvas.getContext("2d");
-			if (!tmpCtx) return;
+			const maskImage = new Image();
+			maskImage.crossOrigin = "anonymous";
+			maskImage.src = maskUrl;
 
-			tmpCtx.drawImage(maskImage, 0, 0, width, height);
-			const imageData = tmpCtx.getImageData(0, 0, width, height);
-			const pixels = imageData.data;
+			maskImage.onload = () => {
+				const tmpCanvas = document.createElement("canvas");
+				tmpCanvas.width = width;
+				tmpCanvas.height = height;
+				const tmpCtx = tmpCanvas.getContext("2d");
+				if (!tmpCtx) return;
 
-			// Create overlay ImageData
-			const overlay = ctx.createImageData(width, height);
-			const overlayPixels = overlay.data;
+				tmpCtx.drawImage(maskImage, 0, 0, width, height);
+				const imageData = tmpCtx.getImageData(0, 0, width, height);
+				const pixels = imageData.data;
 
-			for (let i = 0; i < pixels.length; i += 4) {
-				const r = pixels[i];
-				const g = pixels[i + 1];
-				const b = pixels[i + 2];
+				// Create overlay ImageData
+				const overlay = ctx.createImageData(width, height);
+				const overlayPixels = overlay.data;
 
-				// Grayscale mask: all channels are the same value (class ID)
-				const classId = r; // same as g and b for grayscale PNGs
+				for (let i = 0; i < pixels.length; i += 4) {
+					const r = pixels[i];
+					const g = pixels[i + 1];
+					const b = pixels[i + 2];
 
-				const color = colorMap.get(classId);
-				if (color && classId !== 0) {
-					overlayPixels[i] = color[0];
-					overlayPixels[i + 1] = color[1];
-					overlayPixels[i + 2] = color[2];
-					overlayPixels[i + 3] = Math.round(alpha * 255);
+					// Grayscale mask: all channels are the same value (class ID)
+					const classId = r; // same as g and b for grayscale PNGs
+
+					const color = colorMap.get(classId);
+					if (color && classId !== 0) {
+						overlayPixels[i] = color[0];
+						overlayPixels[i + 1] = color[1];
+						overlayPixels[i + 2] = color[2];
+						overlayPixels[i + 3] = Math.round(alpha * 255);
+					}
 				}
-			}
 
-			ctx.putImageData(overlay, 0, 0);
+				// Composite overlay onto main canvas with proper alpha blending
+				// (putImageData replaces pixels; we must use drawImage to blend)
+				const overlayCanvas = document.createElement("canvas");
+				overlayCanvas.width = width;
+				overlayCanvas.height = height;
+				const overlayCtx = overlayCanvas.getContext("2d");
+				if (overlayCtx) {
+					overlayCtx.putImageData(overlay, 0, 0);
+					ctx.drawImage(overlayCanvas, 0, 0);
+				}
+			};
 		};
-
-		baseImage.crossOrigin = "anonymous";
-		maskImage.crossOrigin = "anonymous";
-		baseImage.src = imageUrl;
-		maskImage.src = maskUrl;
-		baseImage.onload = onLoad;
-		maskImage.onload = onLoad;
-	}, [imageUrl, maskUrl, palette, width, height, alpha]);
+	}, [imageUrl, maskUrl, palette, width, height, alpha, showMask]);
 
 	return (
 		<canvas

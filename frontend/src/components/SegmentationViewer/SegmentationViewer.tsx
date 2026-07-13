@@ -7,7 +7,12 @@ import NavigationBar from "../NavigationBar/NavigationBar";
 import ImageInfo from "../ImageInfo/ImageInfo";
 import styles from "./SegmentationViewer.module.css";
 
-export default function SegmentationViewer() {
+interface Props {
+	imageId?: number;
+	onBack?: () => void;
+}
+
+export default function SegmentationViewer({ imageId = 0, onBack }: Props) {
 	const {
 		currentItem,
 		total,
@@ -19,7 +24,7 @@ export default function SegmentationViewer() {
 		prevItem,
 		hasNext,
 		hasPrev,
-	} = useDataset(0, 1); // fetch one item at a time
+	} = useDataset(imageId, 1); // fetch one item at a time, start at imageId
 
 	const { palette, loading: paletteLoading } = usePalette();
 
@@ -54,9 +59,20 @@ export default function SegmentationViewer() {
 	return (
 		<div className={styles.container}>
 			<header className={styles.header}>
-				<h1 className={styles.title}>
-					DenseCoralNet — Semantic Segmentation Viewer
-				</h1>
+				<div className={styles.headerLeft}>
+					{onBack && (
+						<button
+							className={styles.backBtn}
+							onClick={onBack}
+							title="Back to image browser"
+						>
+							← Back to Browser
+						</button>
+					)}
+					<h1 className={styles.title}>
+						DenseCoralNet — Semantic Segmentation Viewer
+					</h1>
+				</div>
 				<span className={styles.count}>
 					{loading ? "Loading..." : `${total.toLocaleString()} images`}
 				</span>

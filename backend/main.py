@@ -62,25 +62,23 @@ async def list_dataset(
     offset: int = Query(0, ge=0, description="Number of items to skip"),
     limit: int = Query(100, ge=1, le=10000, description="Max items to return"),
 ):
-    """List dataset items with pagination and class palette.
+    """List dataset items with pagination.
 
     Returns a JSON object with:
       - total: total number of items in the dataset
-      - data: list of DataItemResponse (paginated)
-      - class_palette: list of ClassInfo with id, name, color
+      - data: list of DataItemResponse (paginated), each including a per-image class_palette
     """
     all_data = _server.dataset.get_all_data()
     total = len(all_data)
     page = all_data[offset : offset + limit]
 
-    data_items = [_server.resolve_data_info(d) for d in page]
+    data_items = _server.resolve_data_batch(page)
 
     return {
         "total": total,
         "offset": offset,
         "limit": limit,
         "data": data_items,
-        "class_palette": _server.get_palette(),
     }
 
 
@@ -116,9 +114,14 @@ async def serve_mask(data_id: int):
 
 @app.get("/api/palette")
 async def get_palette():
-    """Return the class color palette (cached after first call)."""
+    """Return the class color palette derived from all resolved data items.
+
+    This endpoint is kept for backward compatibility; the frontend now
+    uses per-image palettes from /api/dataset responses.
+    """
+    all_class_ids = _server.dataset.get_all_class_ids()
     return {
-        "class_palette": _server.get_palette(),
+        "class_palette": _server.make_palette_for_classes(all_class_ids),
     }
 
 

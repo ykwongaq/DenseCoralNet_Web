@@ -1,6 +1,5 @@
 import { useEffect, useCallback, useState } from "react";
 import { useDataset } from "../../hooks/useDataset";
-import { usePalette } from "../../hooks/usePalette";
 import ImageCanvas from "../ImageCanvas/ImageCanvas";
 import ClassLegend from "../ClassLegend/ClassLegend";
 import NavigationBar from "../NavigationBar/NavigationBar";
@@ -26,7 +25,7 @@ export default function SegmentationViewer({ imageId = 0, onBack }: Props) {
 		hasPrev,
 	} = useDataset(imageId, 1); // fetch one item at a time, start at imageId
 
-	const { palette, loading: paletteLoading } = usePalette();
+	const palette = currentItem?.class_palette ?? [];
 
 	// Alpha slider for mask overlay opacity
 	const [alpha, setAlpha] = useState(0.5);
@@ -139,15 +138,11 @@ export default function SegmentationViewer({ imageId = 0, onBack }: Props) {
 				</div>
 
 				<aside className={styles.sidebar}>
-					{paletteLoading ? (
-						<div className={styles.loading}>Loading palette...</div>
-					) : (
-						<ClassLegend
-							palette={palette}
-							activeClassIds={currentItem?.class_ids ?? []}
-							classLabels={currentItem?.classLabels ?? []}
-						/>
-					)}
+					<ClassLegend
+						palette={palette}
+						activeClassIds={currentItem?.class_ids ?? []}
+						classLabels={currentItem?.classLabels ?? []}
+					/>
 				</aside>
 			</div>
 

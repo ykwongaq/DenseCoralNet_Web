@@ -19,13 +19,17 @@ export function useDataset(initialOffset = 0, limit = 100) {
 				);
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const json: DatasetResponse = await res.json();
-				// Compute display labels once per item
-				const enriched = json.data.map((item) => ({
-					...item,
-					classLabels: item.class_ids.map((_, i) =>
-						i === 0 ? "Background" : `Class ${i}`,
-					),
-				}));
+				// Compute display labels once per item.
+				// ID 0 is reserved for background; other classes get sequential names.
+				const enriched = json.data.map((item) => {
+					let seq = 0;
+					return {
+						...item,
+						classLabels: item.class_ids.map((cid) =>
+							cid === 0 ? "Background" : `Class ${++seq}`,
+						),
+					};
+				});
 				setData(enriched);
 				setTotal(json.total);
 				setOffset(newOffset);

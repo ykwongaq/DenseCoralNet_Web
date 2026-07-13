@@ -1,5 +1,6 @@
+import concurrent.futures
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 from PIL import Image
@@ -52,7 +53,6 @@ class Server:
         self.mask_dir = os.path.join(self.dataset_dir, "mapped_masks")
 
         self.dataset: Dataset = self.prepare_dataset()
-        self._palette_cache: Optional[List[dict]] = None
 
     def prepare_dataset(self) -> Dataset:
         """Scan filenames only -- no file reading. Builds paired (image, mask) index."""
@@ -107,6 +107,24 @@ class Server:
             except Exception:
                 pass
 
+        # Always reserve ID 0 for background: ensure it is always present in class_ids
+        # (even if the mask does not contain any background pixels).
+        if 0 not in data.class_ids:
+            data.class_ids = [0] + data.class_ids
+
+        # Build per-image palette from class_ids (colors are deterministic by ID)
+        class_palette = [{"id": 0, "name": "background", "color": [0, 0, 0]}]
+        for cid in data.class_ids:
+            if cid == 0:
+                continue
+            class_palette.append(
+                {
+                    "id": cid,
+                    "name": f"class_{cid}",
+                    "color": list(_get_color_for_class(cid)),
+                }
+            )
+
         return {
             "id": data.id,
             "image_filename": data.image_filename,
@@ -116,38 +134,34 @@ class Server:
             "width": data.width,
             "height": data.height,
             "class_ids": data.class_ids,
+            "class_palette": class_palette,
         }
 
-    def get_palette(self, sample_size: int = 2000) -> List[dict]:
-        """Build a class palette by sampling masks. Results are cached after first call."""
-        if self._palette_cache is not None:
-            return self._palette_cache
+    def resolve_data_batch(
+        self, data_list: List[Data], max_workers: int = 8
+    ) -> List[dict]:
+        """Resolve info for multiple Data items in parallel using a thread pool.
 
-        mask_names = sorted(os.listdir(self.mask_dir))
-        step = max(1, len(mask_names) // sample_size)
-        global_class_ids = set()
+        PIL image decoding releases the GIL, so threading provides a real speedup
+        for the I/O-bound task of opening image and mask files.
+        """
+        if not data_list:
+            return []
 
-        for i in range(0, len(mask_names), step):
-            mask_path = os.path.join(self.mask_dir, mask_names[i])
-            try:
-                with Image.open(mask_path) as mask:
-                    mask_arr = np.array(mask)
-                    global_class_ids.update(int(v) for v in np.unique(mask_arr))
-            except Exception:
-                pass
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(self.resolve_data_info, data_list))
+        return results
 
-        palette = []
-        # Always include background (id=0) as black
-        palette.append(
-            {
-                "id": 0,
-                "name": "background",
-                "color": [0, 0, 0],
-            }
-        )
-        for cid in sorted(global_class_ids):
+    def make_palette_for_classes(self, class_ids: set) -> List[dict]:
+        """Build palette entries for a given set of class IDs.
+
+        Colors are deterministically assigned by class ID via _get_color_for_class,
+        so no file scanning is needed.
+        """
+        palette = [{"id": 0, "name": "background", "color": [0, 0, 0]}]
+        for cid in sorted(class_ids):
             if cid == 0:
-                continue  # already added above
+                continue
             palette.append(
                 {
                     "id": cid,
@@ -155,6 +169,4 @@ class Server:
                     "color": list(_get_color_for_class(cid)),
                 }
             )
-
-        self._palette_cache = palette
         return palette

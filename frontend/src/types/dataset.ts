@@ -17,6 +17,8 @@ export interface DataItem {
 	class_ids: number[];
 	/** Display labels computed from remapped indices (index 0 = "Background", 1+ = "Class N"). */
 	classLabels: string[];
+	/** Per-image palette derived from this item's class_ids. */
+	class_palette: ClassInfo[];
 }
 
 /** Response from GET /api/dataset */
@@ -25,7 +27,6 @@ export interface DatasetResponse {
 	offset: number;
 	limit: number;
 	data: DataItem[];
-	class_palette: ClassInfo[];
 }
 
 /** Response from GET /api/palette */

@@ -60,6 +60,11 @@ export default function SegmentationViewer({ imageId = 0, onBack }: Props) {
 		<div className={styles.container}>
 			<header className={styles.header}>
 				<div className={styles.headerLeft}>
+					<h1 className={styles.title}>
+						DenseCoralNet — Semantic Segmentation Viewer
+					</h1>
+				</div>
+				<div className={styles.headerRight}>
 					{onBack && (
 						<button
 							className={styles.backBtn}
@@ -69,13 +74,10 @@ export default function SegmentationViewer({ imageId = 0, onBack }: Props) {
 							← Back to Browser
 						</button>
 					)}
-					<h1 className={styles.title}>
-						DenseCoralNet — Semantic Segmentation Viewer
-					</h1>
+					<span className={styles.count}>
+						{loading ? "Loading..." : `${total.toLocaleString()} images`}
+					</span>
 				</div>
-				<span className={styles.count}>
-					{loading ? "Loading..." : `${total.toLocaleString()} images`}
-				</span>
 			</header>
 
 			<NavigationBar

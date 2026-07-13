@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ClassInfo, PaletteResponse } from "../types/dataset";
-
-const API_BASE = "/api";
+import { API_BASE } from "../config";
 
 /** Global cache outside React to survive remounts. */
 let cachedPalette: ClassInfo[] | null = null;

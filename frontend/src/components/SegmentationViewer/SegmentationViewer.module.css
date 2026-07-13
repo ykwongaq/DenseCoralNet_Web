@@ -24,6 +24,12 @@
   gap: 16px;
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .backBtn {
   padding: 6px 14px;
   font-size: 13px;

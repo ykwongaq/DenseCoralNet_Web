@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import styles from "./NavigationBar.module.css";
 
 interface Props {
@@ -19,9 +20,20 @@ export default function NavigationBar({
 	hasPrev,
 	hasNext,
 }: Props) {
+	const [inputValue, setInputValue] = useState(String(offset));
+
+	// Sync input value when offset changes externally (prev/next clicks)
+	useEffect(() => {
+		setInputValue(String(offset));
+	}, [offset]);
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setInputValue(e.target.value);
+	};
+
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter") {
-			const val = parseInt((e.target as HTMLInputElement).value, 10);
+			const val = parseInt(inputValue, 10);
 			if (!isNaN(val) && val >= 0 && val < total) {
 				onGoTo(val);
 			}
@@ -45,7 +57,8 @@ export default function NavigationBar({
 					type="number"
 					min={0}
 					max={total - 1}
-					defaultValue={offset}
+					value={inputValue}
+					onChange={handleChange}
 					onKeyDown={handleKeyDown}
 					aria-label="Go to index"
 				/>

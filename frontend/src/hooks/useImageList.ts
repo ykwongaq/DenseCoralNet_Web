@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { DataItem, DatasetResponse } from "../types/dataset";
-
-const API_BASE = "/api";
+import { API_BASE } from "../config";
 const PAGE_SIZE = 100;
 
 export function useImageList() {

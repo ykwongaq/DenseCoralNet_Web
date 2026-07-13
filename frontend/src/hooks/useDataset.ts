@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { DataItem, DatasetResponse } from "../types/dataset";
-
-const API_BASE = "/api";
+import { API_BASE } from "../config";
 
 export function useDataset(initialOffset = 0, limit = 100) {
 	const [data, setData] = useState<DataItem[]>([]);

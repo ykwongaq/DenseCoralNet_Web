@@ -18,11 +18,15 @@ export default function ClassLegend({
 		paletteMap.set(cls.id, cls);
 	}
 
+	// Filter out background class (id === 0)
+	const visibleClassIds = activeClassIds.filter((id) => id !== 0);
+	const visibleLabels = classLabels.filter((_, i) => activeClassIds[i] !== 0);
+
 	return (
 		<div className={styles.legend}>
-			<h3 className={styles.title}>Classes ({activeClassIds.length})</h3>
+			<h3 className={styles.title}>Classes ({visibleClassIds.length})</h3>
 			<div className={styles.list}>
-				{activeClassIds.map((id, i) => {
+				{visibleClassIds.map((id, i) => {
 					const cls = paletteMap.get(id);
 					if (!cls) return null;
 					const [r, g, b] = cls.color;
@@ -32,7 +36,7 @@ export default function ClassLegend({
 								className={styles.swatch}
 								style={{ backgroundColor: `rgb(${r},${g},${b})` }}
 							/>
-							<span className={styles.label}>{classLabels[i]}</span>
+							<span className={styles.label}>{visibleLabels[i]}</span>
 						</div>
 					);
 				})}
